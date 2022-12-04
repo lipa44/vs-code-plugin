@@ -6,18 +6,14 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
     private _onDidChangeTreeData: vscode.EventEmitter<CsprojFileItem | undefined | void> = new vscode.EventEmitter<CsprojFileItem | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<CsprojFileItem | undefined | void> = this._onDidChangeTreeData.event;
 
-    refresh(): void {
-        this._onDidChangeTreeData.fire();
-    }
+    refresh = (): void => this._onDidChangeTreeData.fire();
 
     constructor(private workspaceRoot: string | undefined) {
     }
 
-    getTreeItem(element: CsprojFileItem): vscode.TreeItem {
-        return element;
-    }
+    getTreeItem = (element: CsprojFileItem): vscode.TreeItem => element;
 
-    getChildren(element?: CsprojFileItem): Thenable<CsprojFileItem[]> {
+    getChildren = (element?: CsprojFileItem): Thenable<CsprojFileItem[]> => {
         if (!this.workspaceRoot) {
             vscode.window.showInformationMessage('No dependency in empty workspace');
             return Promise.resolve([]);
@@ -46,15 +42,15 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
                 return Promise.resolve([]);
             }
         }
-    }
+    };
 
 
-    private getDepsInSolution(solutionFilePath: string): CsprojFileItem[] {
+    private getDepsInSolution = (solutionFilePath: string): CsprojFileItem[] => {
         if (!this.pathExists(solutionFilePath)) return [];
 
         const solutionFile = fs.readFileSync(solutionFilePath, 'utf-8');
         const solutionLines = solutionFile.split(this.getLineDividerForOS());
-        const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}[-]{1}([0-9a-fA-F]{4}[-]?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)")/);
+        const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)")/);
 
         const projNames: string[] = [];
 
@@ -77,9 +73,9 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
 
             return new CsprojFileItem(projName, state);
         });
-    }
+    };
 
-    private getDepsInProject(projectPath: string): CsprojFileItem[] {
+    private getDepsInProject = (projectPath: string): CsprojFileItem[] => {
         if (!this.pathExists(projectPath)) return [];
 
         const fs = require('fs');
@@ -88,7 +84,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         return files
             .filter((file: string) => file === 'bin' || file === 'obj')
             .map((file: string) => new BuildFolderItem(file, vscode.TreeItemCollapsibleState.None, projectPath));
-    }
+    };
 
 
     private pathExists = (p: string): boolean => {

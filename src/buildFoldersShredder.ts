@@ -1,7 +1,7 @@
 import path = require("path");
 
 export class BuildFoldersShredder {
-    public tryDeleteBuildFolder(projectPath: string, folderName: string) {
+    public tryDeleteBuildFolder = (projectPath: string, folderName: string) => {
         const fs = require('fs');
 
         try {
@@ -12,7 +12,7 @@ export class BuildFoldersShredder {
         }
 
         return new ShredderResult(true);
-    }
+    };
 }
 
 export class ShredderResult {
