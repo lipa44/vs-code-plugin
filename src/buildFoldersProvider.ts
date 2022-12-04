@@ -29,15 +29,16 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
             const projects: CsprojFileItem[] = [];
 
             solutionPaths.forEach(solutionPath => {
-                if (!this.pathExists(solutionPath)) return;
+                if (!this.pathExists(solutionPath)) {
+                    return;
+                }
 
                 projects.push(...this.getDepsInSolution(solutionPath));
             });
 
             if (projects.length > 0) {
                 return Promise.resolve(projects);
-            }
-            else {
+            } else {
                 vscode.window.showInformationMessage('Workspace has no solution file');
                 return Promise.resolve([]);
             }
@@ -46,23 +47,20 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
 
 
     private getDepsInSolution = (solutionFilePath: string): CsprojFileItem[] => {
-        if (!this.pathExists(solutionFilePath)) return [];
+        if (!this.pathExists(solutionFilePath)) {
+            return [];
+        }
 
         const solutionFile = fs.readFileSync(solutionFilePath, 'utf-8');
         const solutionLines = solutionFile.split(this.getLineDividerForOS());
         const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)", "(?<projPath>.*?.csproj)")/);
 
-        const projPaths: string[] = [];
-
-        solutionLines.forEach(line => {
-            if (!projectLineRegex.test(line)) return;
-
-            const regexExec = projectLineRegex.exec(line);
-
-            const projPath = this.toValidOsPath(regexExec!.groups!['projPath']);
-
-            projPaths.push(projPath);
-        });
+        const projPaths = solutionLines
+            .filter(line => projectLineRegex.test(line))
+            .map(line => {
+                const regexExec = projectLineRegex.exec(line);
+                return this.toValidOsPath(regexExec!.groups!['projPath']);
+            });
 
         const solutionPath = solutionFilePath.substring(0, solutionFilePath.lastIndexOf(this.getPathDividerForOS()));
 
@@ -79,7 +77,9 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
 
     private getDepsInProject = (projectPath: string): CsprojFileItem[] => {
         projectPath = projectPath.substring(0, projectPath.lastIndexOf(this.getPathDividerForOS()));
-        if (!this.pathExists(projectPath)) return [];
+        if (!this.pathExists(projectPath)) {
+            return [];
+        }
 
         const fs = require('fs');
         const files = fs.readdirSync(projectPath);
@@ -112,7 +112,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         }
     };
 
-    private toValidOsPath = (path: string):string => {
+    private toValidOsPath = (path: string): string => {
         const platform = process.platform;
 
         switch (platform) {
@@ -139,14 +139,16 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
     };
 
     private getFilesRecursively = (directory: string, files: string[]) => {
-        const filesInDirectory = fs.readdirSync(directory, { withFileTypes: true });
+        const filesInDirectory = fs.readdirSync(directory, {withFileTypes: true});
 
         for (const file of filesInDirectory) {
             const absolute = path.join(directory, file.name);
             if (fs.statSync(absolute).isDirectory()) {
                 this.getFilesRecursively(absolute, files);
             } else {
-                if (file.name.split('.').pop() !== "sln") continue;
+                if (file.name.split('.').pop() !== "sln") {
+                    continue;
+                }
 
                 files.push(absolute);
             }
