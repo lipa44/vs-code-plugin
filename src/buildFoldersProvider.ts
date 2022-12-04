@@ -10,7 +10,8 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         this._onDidChangeTreeData.fire();
     }
 
-    constructor(private workspaceRoot: string | undefined) { }
+    constructor(private workspaceRoot: string | undefined) {
+    }
 
     getTreeItem(element: CsprojFileItem): vscode.TreeItem {
         return element;
@@ -27,10 +28,20 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
                 this.getDepsInProject(path.join(this.workspaceRoot, element?.label))
             );
         } else {
-            const solutionFilePath = path.join(this.workspaceRoot, 'PhotoCrash.sln');
-            if (this.pathExists(solutionFilePath)) {
-                return Promise.resolve(this.getDepsInSolution(solutionFilePath));
-            } else {
+            const solutionPaths: string[] = this.getFilesRecursively(this.workspaceRoot, []);
+
+            const projects: CsprojFileItem[] = [];
+
+            solutionPaths.forEach(solutionPath => {
+                if (!this.pathExists(solutionPath)) return;
+
+                projects.push(...this.getDepsInSolution(solutionPath));
+            });
+
+            if (projects.length > 0) {
+                return Promise.resolve(projects);
+            }
+            else {
                 vscode.window.showInformationMessage('Workspace has no solution file');
                 return Promise.resolve([]);
             }
@@ -80,16 +91,16 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
     }
 
 
-    private pathExists(p: string): boolean {
+    private pathExists = (p: string): boolean => {
         try {
             fs.accessSync(p);
         } catch (err) {
             return false;
         }
         return true;
-    }
+    };
 
-    private getLineDividerForOS() {
+    private getLineDividerForOS = () => {
         const platform = process.platform;
 
         switch (platform) {
@@ -100,9 +111,9 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
             default:
                 throw new Error("Sorry, we don't support your OS :(");
         }
-    }
+    };
 
-    private getPathDividerForOS() {
+    private getPathDividerForOS = () => {
         const platform = process.platform;
 
         switch (platform) {
@@ -113,7 +124,24 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
             default:
                 throw new Error("Sorry, we don't support your OS :(");
         }
-    }
+    };
+
+    private getFilesRecursively = (directory: string, files: string[]) => {
+        const filesInDirectory = fs.readdirSync(directory, { withFileTypes: true });
+
+        for (const file of filesInDirectory) {
+            const absolute = path.join(directory, file.name);
+            if (fs.statSync(absolute).isDirectory()) {
+                this.getFilesRecursively(absolute, files);
+            } else {
+                if (file.name.split('.').pop() !== "sln") continue;
+
+                files.push(absolute);
+            }
+        }
+
+        return files;
+    };
 }
 
 class BuildFolderItem extends vscode.TreeItem {
