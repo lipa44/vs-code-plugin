@@ -42,7 +42,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         if (!this.pathExists(projectPath)) return [];
 
         const solutionFile = fs.readFileSync(projectPath, 'utf-8');
-        const solutionLines = solutionFile.split("\r\n");
+        const solutionLines = solutionFile.split(this.getDeviderForOS());
         const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}[-]{1}([0-9a-fA-F]{4}[-]?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)")/);
 
         const projNames: string[] = [];
@@ -83,6 +83,19 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
             return false;
         }
         return true;
+    }
+
+    private getDeviderForOS() {
+        const platform = process.platform;
+
+        switch (platform) {
+            case "darwin":
+                return "\n";
+            case "win32":
+                return "\r\n";
+            default:
+                throw new Error("Sorry, we don't support your OS :(");
+        }
     }
 }
 
