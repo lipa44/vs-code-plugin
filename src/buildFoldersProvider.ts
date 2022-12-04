@@ -21,7 +21,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
 
         if (element) {
             return Promise.resolve(
-                this.getDepsInProject(path.join(this.workspaceRoot, element?.label))
+                this.getDepsInProject(element?.projectPath)
             );
         } else {
             const solutionPaths: string[] = this.getFilesRecursively(this.workspaceRoot, []);
@@ -50,32 +50,35 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
 
         const solutionFile = fs.readFileSync(solutionFilePath, 'utf-8');
         const solutionLines = solutionFile.split(this.getLineDividerForOS());
-        const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)")/);
+        const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)", "(?<projPath>.*?.csproj)")/);
 
-        const projNames: string[] = [];
+        const projPaths: string[] = [];
 
         solutionLines.forEach(line => {
             if (!projectLineRegex.test(line)) return;
 
             const regexExec = projectLineRegex.exec(line);
 
-            const projName = regexExec!.groups!['projName'];
+            const projPath = this.toValidOsPath(regexExec!.groups!['projPath']);
 
-            projNames.push(projName);
+            projPaths.push(projPath);
         });
 
         const solutionPath = solutionFilePath.substring(0, solutionFilePath.lastIndexOf(this.getPathDividerForOS()));
 
-        return projNames.map(projName => {
-            const state = this.getDepsInProject(path.join(solutionPath, projName)).length > 0
+        return projPaths.map(projPath => {
+            const absoluteProjPath = path.join(solutionPath, projPath);
+
+            const state = this.getDepsInProject(absoluteProjPath).length > 0
                 ? vscode.TreeItemCollapsibleState.Expanded
                 : vscode.TreeItemCollapsibleState.None;
 
-            return new CsprojFileItem(projName, state);
+            return new CsprojFileItem(projPath, absoluteProjPath, state);
         });
     };
 
     private getDepsInProject = (projectPath: string): CsprojFileItem[] => {
+        projectPath = projectPath.substring(0, projectPath.lastIndexOf(this.getPathDividerForOS()));
         if (!this.pathExists(projectPath)) return [];
 
         const fs = require('fs');
@@ -104,6 +107,19 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
                 return "\n";
             case "win32":
                 return "\r\n";
+            default:
+                throw new Error("Sorry, we don't support your OS :(");
+        }
+    };
+
+    private toValidOsPath = (path: string):string => {
+        const platform = process.platform;
+
+        switch (platform) {
+            case "darwin":
+                return path.replaceAll("\\", this.getPathDividerForOS());
+            case "win32":
+                return path.replaceAll("/", this.getPathDividerForOS());
             default:
                 throw new Error("Sorry, we don't support your OS :(");
         }
@@ -160,11 +176,12 @@ class BuildFolderItem extends vscode.TreeItem {
 class CsprojFileItem extends vscode.TreeItem {
     constructor(
         public readonly label: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+        public readonly projectPath: string,
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState
     ) {
         super(label, collapsibleState);
-        this.tooltip = `${this.label}`;
-        this.description = `${this.label}.csproj`;
+        this.tooltip = `${this.label}`.replace(".csproj", "");
+        this.description = `${this.label}`;
     }
 
     iconPath = {
