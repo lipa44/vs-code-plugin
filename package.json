@@ -1,8 +1,8 @@
 {
-  "name": "superultracoolextension",
-  "displayName": "SuperUltraCoolExtension",
-  "description": "Just working",
-  "version": "0.0.1",
+  "name": "binobjsshredder",
+  "displayName": "Bin/Onj shredder",
+  "description": "Simple extension for deleting bin/obj folders",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.73.0"
   },
