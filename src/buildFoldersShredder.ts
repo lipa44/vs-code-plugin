@@ -5,7 +5,7 @@ export class BuildFoldersShredder {
         var fs = require('fs');
 
         try {
-            fs.unlinkSync(path.join(projectPath, folderName));
+            fs.rmSync(path.join(projectPath, folderName), { recursive: true, force: true });
         }
         catch (err) {
             return new SchredderResult(false, err as Error);
