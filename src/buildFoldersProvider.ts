@@ -38,11 +38,11 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
     }
 
 
-    private getDepsInSolution(projectPath: string): CsprojFileItem[] {
-        if (!this.pathExists(projectPath)) return [];
+    private getDepsInSolution(solutionFilePath: string): CsprojFileItem[] {
+        if (!this.pathExists(solutionFilePath)) return [];
 
-        const solutionFile = fs.readFileSync(projectPath, 'utf-8');
-        const solutionLines = solutionFile.split(this.getDeviderForOS());
+        const solutionFile = fs.readFileSync(solutionFilePath, 'utf-8');
+        const solutionLines = solutionFile.split(this.getDividerForOS());
         const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}[-]{1}([0-9a-fA-F]{4}[-]?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)")/);
 
         const projNames: string[] = [];
@@ -57,7 +57,14 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
             projNames.push(projName);
         });
 
-        const deps = projNames.map(dep => new CsprojFileItem(dep, vscode.TreeItemCollapsibleState.Collapsed));
+        const solutionPath = solutionFilePath.substring(0, solutionFilePath.lastIndexOf(this.getPathDividerForOS()));
+        const deps = projNames.map(projName => {
+            const state = this.getDepsInProject(path.join(solutionPath, projName)).length > 0
+                ? vscode.TreeItemCollapsibleState.Expanded
+                : vscode.TreeItemCollapsibleState.None;
+
+            return new CsprojFileItem(projName, state);
+        });
 
         return deps;
     }
@@ -85,7 +92,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         return true;
     }
 
-    private getDeviderForOS() {
+    private getDividerForOS() {
         const platform = process.platform;
 
         switch (platform) {
@@ -93,6 +100,19 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
                 return "\n";
             case "win32":
                 return "\r\n";
+            default:
+                throw new Error("Sorry, we don't support your OS :(");
+        }
+    }
+
+    private getPathDividerForOS() {
+        const platform = process.platform;
+
+        switch (platform) {
+            case "darwin":
+                return "/";
+            case "win32":
+                return "\\";
             default:
                 throw new Error("Sorry, we don't support your OS :(");
         }
