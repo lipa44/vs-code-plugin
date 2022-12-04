@@ -2,20 +2,20 @@ import path = require("path");
 
 export class BuildFoldersShredder {
     public tryDeleteBuildFolder(projectPath: string, folderName: string) {
-        var fs = require('fs');
+        const fs = require('fs');
 
         try {
             fs.rmSync(path.join(projectPath, folderName), { recursive: true, force: true });
         }
         catch (err) {
-            return new SchredderResult(false, err as Error);
+            return new ShredderResult(false, err as Error);
         }
 
-        return new SchredderResult(true);
+        return new ShredderResult(true);
     }
 }
 
-export class SchredderResult {
+export class ShredderResult {
     result: boolean;
     exception: Error | undefined;
 
