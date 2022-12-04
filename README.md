@@ -16,3 +16,11 @@ So you just remove binary files and recompile `.csproj` to make it work again.
 ## Release Notes
 
 First release, base functionality added.
+
+## 1.0.1
+
+Fixed a typo in name :)
+
+## 1.0.2
+
+Added a logo && licence

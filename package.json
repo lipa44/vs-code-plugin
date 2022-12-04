@@ -4,7 +4,7 @@
   "description": "Simple extension for deleting bin/obj folders",
   "version": "1.0.2",
   "license": "MIT",
-  "icon": "logo.svg",
+  "icon": "logo.png",
   "repository": {
     "url": "https://github.com/lipa44/vs-code-plugin"
   },
