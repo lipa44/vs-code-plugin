@@ -42,7 +42,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         if (!this.pathExists(solutionFilePath)) return [];
 
         const solutionFile = fs.readFileSync(solutionFilePath, 'utf-8');
-        const solutionLines = solutionFile.split(this.getDividerForOS());
+        const solutionLines = solutionFile.split(this.getLineDividerForOS());
         const projectLineRegex = new RegExp(/(?<proj>Project\("{(?<guid>[0-9a-fA-F]{8}[-]{1}([0-9a-fA-F]{4}[-]?){3}[0-9a-fA-F]{12}?)}"\) = "(?<projName>.*?)")/);
 
         const projNames: string[] = [];
@@ -58,28 +58,25 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         });
 
         const solutionPath = solutionFilePath.substring(0, solutionFilePath.lastIndexOf(this.getPathDividerForOS()));
-        const deps = projNames.map(projName => {
+
+        return projNames.map(projName => {
             const state = this.getDepsInProject(path.join(solutionPath, projName)).length > 0
                 ? vscode.TreeItemCollapsibleState.Expanded
                 : vscode.TreeItemCollapsibleState.None;
 
             return new CsprojFileItem(projName, state);
         });
-
-        return deps;
     }
 
     private getDepsInProject(projectPath: string): CsprojFileItem[] {
         if (!this.pathExists(projectPath)) return [];
 
-        var fs = require('fs');
-        var files = fs.readdirSync(projectPath);
+        const fs = require('fs');
+        const files = fs.readdirSync(projectPath);
 
-        var buildFolders = files
+        return files
             .filter((file: string) => file === 'bin' || file === 'obj')
             .map((file: string) => new BuildFolderItem(file, vscode.TreeItemCollapsibleState.None, projectPath));
-
-        return buildFolders;
     }
 
 
@@ -92,7 +89,7 @@ export class BuildFoldersProvider implements vscode.TreeDataProvider<CsprojFileI
         return true;
     }
 
-    private getDividerForOS() {
+    private getLineDividerForOS() {
         const platform = process.platform;
 
         switch (platform) {
