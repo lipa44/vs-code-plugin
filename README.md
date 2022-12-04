@@ -23,4 +23,4 @@ Fixed a typo in name :)
 
 ## 1.0.2
 
-Added a logo && licence
+Added a logo && license
