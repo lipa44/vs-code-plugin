@@ -1,6 +1,6 @@
 {
   "name": "binobjsshredder",
-  "displayName": "Bin/Onj shredder",
+  "displayName": "Bin/Obj shredder",
   "description": "Simple extension for deleting bin/obj folders",
   "version": "1.0.0",
   "repository": {
